@@ -1,0 +1,12 @@
+/node_modules/
+/src-tauri/target/
+/src-tauri/gen/
+/release/
+*.log
+/release.zip
+/src/assets/whale.png
+/src-tauri/icons/
+
+/src-tauri/icons-public/*
+!/src-tauri/icons-public/icon.ico
+!/src-tauri/icons-public/icon.png
