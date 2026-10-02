@@ -82,7 +82,7 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     });
     TrayIconBuilder::with_id("pet")
         .icon(app.default_window_icon().unwrap().clone())
-        .tooltip("Codex Pet · 右键打开菜单")
+        .tooltip("Codex-QuotaWhale · 右键打开菜单")
         .menu(&menu).show_menu_on_left_click(false)
         .on_tray_icon_event(|tray, event| {
             if let TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } = event {
@@ -94,3 +94,4 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     apply_scale(app.handle(), scale)?;
     Ok(())
 }
+

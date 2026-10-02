@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Codex Pet",
+  "productName": "Codex-QuotaWhale",
   "version": "0.1.0",
   "identifier": "local.codexpet.desktop",
   "build": {
@@ -11,7 +11,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Codex Pet",
+        "title": "Codex-QuotaWhale",
         "width": 250,
         "height": 370,
         "resizable": false,
@@ -33,5 +33,6 @@
       "icons-public/icon.ico",
       "icons-public/icon.png"
     ]
-  }
+  },
+  "mainBinaryName": "Codex-QuotaWhale"
 }
