@@ -505,7 +505,7 @@ dependencies = [
 
 [[package]]
 name = "codex-pet"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "reqwest 0.12.28",
  "serde",

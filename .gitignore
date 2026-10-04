@@ -8,5 +8,14 @@
 
 /src-tauri/icons-public/*
 !/src-tauri/icons-public/icon.ico
-!/src-tauri/icons-public/icon.png
 /src-tauri/icons-local/
+
+# Local drafts, exports and credentials
+/ChatGPT *.png
+/docs/DEVELOPMENT.md
+/work/
+/outputs/
+*.zip
+.env
+.env.*
+auth.json

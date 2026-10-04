@@ -1,5 +1,15 @@
 {
-  "name": "codex-pet", "version": "0.1.0", "private": true, "type": "module",
-  "scripts": { "dev": "tauri dev", "build": "tauri build --no-bundle", "test": "node --test tests/*.test.js", "tauri": "tauri" },
-  "devDependencies": { "@tauri-apps/cli": "^2.0.0" }
+  "name": "codex-pet",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build --no-bundle",
+    "test": "node --test tests/*.test.js",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  }
 }

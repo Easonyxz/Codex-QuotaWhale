@@ -3,6 +3,9 @@ use std::{path::PathBuf, time::Duration};
 use tauri::{Manager, PhysicalPosition};
 use windows_sys::Win32::Graphics::Gdi::{CreateRectRgn, CombineRgn, DeleteObject, SetWindowRgn, RGN_OR};
 
+use windows_sys::Win32::Graphics::Dwm::{DwmSetWindowAttribute, DWMWA_NCRENDERING_POLICY, DWMNCRP_DISABLED};
+use windows_sys::Win32::UI::WindowsAndMessaging::{GetWindowLongPtrW, SetWindowLongPtrW, SetWindowPos, GWL_STYLE, WS_CAPTION, WS_THICKFRAME, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, SWP_NOACTIVATE, SWP_FRAMECHANGED};
+
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Position { x: i32, y: i32 }
 
@@ -49,6 +52,18 @@ pub fn save_position(app: &tauri::AppHandle) {
 
 pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     let window = app.get_webview_window("main").unwrap();
+    // The pet paints its own rounded outline. Native non-client painting can
+    // otherwise draw an activation line along the top of a custom window region.
+    unsafe {
+        let hwnd = window.hwnd()?.0 as _;
+        let policy = DWMNCRP_DISABLED;
+        DwmSetWindowAttribute(hwnd, DWMWA_NCRENDERING_POLICY as u32,
+            &policy as *const _ as _, std::mem::size_of_val(&policy) as u32);
+        let style = GetWindowLongPtrW(hwnd, GWL_STYLE);
+        SetWindowLongPtrW(hwnd, GWL_STYLE, style & !((WS_CAPTION | WS_THICKFRAME) as isize));
+        SetWindowPos(hwnd, std::ptr::null_mut(), 0, 0, 0, 0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+    }
     if let Some(pos) = std::fs::read(position_path(app.handle())?).ok()
         .and_then(|bytes| serde_json::from_slice::<Position>(&bytes).ok()) {
         window.set_position(PhysicalPosition::new(pos.x, pos.y))?;

@@ -11,11 +11,16 @@ async fn get_quota(client: tauri::State<'_, reqwest::Client>) -> Result<quota::S
     quota::fetch(&client).await
 }
 
+#[tauri::command]
+async fn get_reset_credits(client: tauri::State<'_, reqwest::Client>) -> Result<quota::ResetCredits, String> {
+    quota::fetch_credits(&client).await
+}
+
 fn main() {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(15))
         .redirect(reqwest::redirect::Policy::none())
-        .user_agent("CodexPet/0.1.0")
+        .user_agent("Codex-QuotaWhale/0.1.1")
         .build().expect("HTTP client initialization failed");
     // Diagnostic mode uses the same request/parser as the UI and prints only quota fields.
     if std::env::args().any(|arg| arg == "--check-quota") {
@@ -53,7 +58,7 @@ fn main() {
             desktop::setup(app)?;
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_quota, menu::show_menu, menu::hide_pet, menu::get_scale, desktop::set_hit_regions])
+        .invoke_handler(tauri::generate_handler![get_quota, get_reset_credits, menu::show_menu, menu::hide_pet, menu::get_scale, desktop::set_hit_regions])
         .run(tauri::generate_context!())
         .expect("Codex Pet failed to start");
 }

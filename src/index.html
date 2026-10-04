@@ -5,11 +5,14 @@
   <main>
     <section class="bubble" aria-label="Codex 剩余额度">
       <header><span class="brand">CODEX <span class="subtle">剩余</span></span><nav><button id="refresh" title="刷新额度" aria-label="刷新额度">↻</button><button id="close" title="隐藏桌宠（托盘可找回）" aria-label="隐藏桌宠">×</button></nav></header>
+      <div class="details">
       <div class="quota" id="short-row" hidden><div class="line"><span>5h</span><strong id="short-value">—</strong></div><div class="track"><div id="short-bar"></div></div><div class="reset" id="short-reset">等待额度</div></div>
       <div class="quota"><div class="line"><span>Weekly</span><strong id="weekly-value">—</strong></div><div class="track"><div id="weekly-bar"></div></div><div class="reset" id="weekly-reset">等待额度</div></div>
+      <div id="credits" class="reset" hidden></div>
       <footer id="status" role="status">正在读取…</footer>
+      </div>
     </section>
-    <div id="pet" title="拖动鲸鱼移动 · 双击刷新" aria-label="拖动鲸鱼移动桌宠"><img src="assets/whale.svg" alt="小鲸鱼" draggable="false"></div>
+    <div id="pet" title="拖动鲸鱼移动 · 双击刷新" aria-label="拖动鲸鱼移动桌宠"><img src="assets/whale.png" alt="小鲸鱼" draggable="false"></div>
     <div id="mini" title="周额度剩余"><span>周</span><div class="track"><div id="mini-bar"></div></div><b id="mini-value">—</b></div>
   </main>
   <script type="module" src="app.js"></script>

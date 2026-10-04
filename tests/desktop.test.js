@@ -18,7 +18,7 @@ test('hover delay cancels flyovers, bridges the gap and removes the upper hit ar
   globalThis.document = { getElementById: id => id === 'pet' ? pet : mini,
     querySelector: selector => selector === 'main' ? main : bubble };
   globalThis.ResizeObserver = class { observe() {} };
-  const { setupDesktop } = await import('../src/desktop.js');
+  const { setupDesktop, syncRegions } = await import('../src/desktop.js');
   setupDesktop();
   await Promise.resolve();
   assert.equal(calls.at(-1).length, 1);
@@ -33,6 +33,14 @@ test('hover delay cancels flyovers, bridges the gap and removes the upper hit ar
   await Promise.resolve();
   assert.equal(main.classList.contains('expanded'), true);
   assert.equal(calls.at(-1).length, 2);
+  const beforeRefresh = calls.length;
+  await syncRegions();
+  await syncRegions();
+  assert.equal(calls.length, beforeRefresh, 'unchanged quota renders must not reset the native clip');
+  bubble.rect.y -= 10;
+  bubble.rect.height += 10;
+  await syncRegions();
+  assert.equal(calls.length, beforeRefresh + 1, 'changed panel bounds must update the clip');
   pet.dispatchEvent(new Event('pointerleave'));
   t.mock.timers.tick(150);
   bubble.dispatchEvent(new Event('pointerenter'));

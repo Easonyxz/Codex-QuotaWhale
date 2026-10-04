@@ -41,7 +41,7 @@ fn parse(value: &Value, timestamp: u64) -> Result<Snapshot, String> {
     Ok(snapshot)
 }
 
-pub async fn fetch(client: &reqwest::Client) -> Result<Snapshot, String> {
+async fn fetch_value(client: &reqwest::Client, endpoint: &str) -> Result<Value, String> {
     let home = std::env::var_os("CODEX_HOME").map(PathBuf::from)
         .or_else(|| std::env::var_os("USERPROFILE").map(|p| PathBuf::from(p).join(".codex")))
         .ok_or("找不到 Codex 登录目录")?;
@@ -53,7 +53,7 @@ pub async fn fetch(client: &reqwest::Client) -> Result<Snapshot, String> {
     let tokens = auth.get("tokens").unwrap_or(&auth);
     let token = tokens.get("access_token").and_then(Value::as_str)
         .ok_or("请使用 ChatGPT 账户登录 Codex")?;
-    let mut request = client.get("https://chatgpt.com/backend-api/wham/usage")
+    let mut request = client.get(format!("https://chatgpt.com/backend-api/wham/{endpoint}"))
         .bearer_auth(token).header("Accept", "application/json")
         .header("originator", "Codex Desktop").header("OAI-Product-Sku", "CODEX");
     if let Some(id) = tokens.get("account_id").and_then(Value::as_str) {
@@ -73,13 +73,60 @@ pub async fn fetch(client: &reqwest::Client) -> Result<Snapshot, String> {
         bytes.extend_from_slice(&chunk);
     }
     let value = serde_json::from_slice(&bytes).map_err(|_| "额度服务响应格式异常")?;
-    parse(&value, now())
+    Ok(value)
+}
+
+pub async fn fetch(client: &reqwest::Client) -> Result<Snapshot, String> {
+    parse(&fetch_value(client, "usage").await?, now())
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ResetCredits { count: u64, expirations: Vec<Value> }
+
+fn parse_credits(value: &Value) -> Result<ResetCredits, String> {
+    let count = ["available_count", "availableCount", "remaining", "count", "quantity"]
+        .iter().find_map(|key| value.get(key).and_then(Value::as_u64))
+        .ok_or("重置卡次数未提供")?;
+    fn visit(value: &Value, output: &mut Vec<Value>) {
+        match value {
+            Value::Array(items) => for item in items { visit(item, output); },
+            Value::Object(map) => {
+                if map.get("status").and_then(Value::as_str).is_some_and(|status| status != "available") { return; }
+                if let Some(time) = ["expires_at", "expiresAt", "expiration_time", "expirationTime", "expires"]
+                    .iter().find_map(|key| map.get(*key).filter(|v| v.is_string() || v.is_number())) {
+                    if !output.contains(time) { output.push(time.clone()); }
+                }
+                for key in ["credits", "reset_credits", "resetCredits", "available", "items", "grants"] {
+                    if let Some(child) = map.get(key) { visit(child, output); }
+                }
+            },
+            _ => {},
+        }
+    }
+    let mut expirations = Vec::new();
+    visit(value, &mut expirations);
+    Ok(ResetCredits { count, expirations })
+}
+
+pub async fn fetch_credits(client: &reqwest::Client) -> Result<ResetCredits, String> {
+    parse_credits(&fetch_value(client, "rate-limit-reset-credits").await?)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use serde_json::json;
+    #[test]
+    fn reset_credits_preserve_zero_and_nested_expirations() {
+        let credits = parse_credits(&json!({"available_count": 2, "credits": [
+            {"expires_at": "2026-10-30T00:00:00Z"}, {"expires_at": 1800000000}, {"status": "redeemed", "expires_at": 1700000000}
+        ]})).unwrap();
+        assert_eq!(credits.count, 2);
+        assert_eq!(credits.expirations.len(), 2);
+        assert_eq!(parse_credits(&json!({"remaining": 0})).unwrap().count, 0);
+        assert!(parse_credits(&json!({})).is_err());
+    }
     #[test]
     fn maps_duration_and_preserves_small_percent() {
         let data = json!({"rate_limit": {

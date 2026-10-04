@@ -2,6 +2,7 @@ const api = window.__TAURI__;
 let ready = false;
 let syncing = false;
 let pending = false;
+let lastRegions = '';
 
 export async function syncRegions() {
   if (!ready) return;
@@ -20,7 +21,11 @@ export async function syncRegions() {
         rects.push({ x: bubble.x - 5 * scale, y: bubble.y - 5 * scale,
           width: bubble.width + 10 * scale, height: bubble.height + 29 * scale });
       }
+      // Reapplying an unchanged native region can leave WebView2 edge artifacts.
+      const signature = JSON.stringify([window.devicePixelRatio, rects]);
+      if (signature === lastRegions) continue;
       await api.core.invoke('set_hit_regions', { rects });
+      lastRegions = signature;
     }
   } catch (error) {
     console.error('Window region update failed', error);
